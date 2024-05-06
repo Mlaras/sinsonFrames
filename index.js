@@ -30,5 +30,5 @@ const handler = async (event, context) => {
   console.log(publishResult);
   return;
 }
-handler();
+
 module.exports = {handler};
