@@ -1,5 +1,5 @@
 const { IgApiClient } = require('instagram-private-api');
-const { getRandomFrame } = require('./scrapper.js');
+const { getMultipleFrames } = require('./multiPostScrapper.js');
 require('dotenv').config();
 
 const ig = new IgApiClient();
@@ -19,15 +19,14 @@ const handler = async (event, context) => {
     return
   }
   await login();
-  const res = await getRandomFrame();
-  // console.log('description', res.juicyPostDescription);
-  const publishResult = await ig.publish.photo({
-    // attach image as a buffer
-    file: res.frameBuffer,
-    // optional, default ''
-    caption: res.juicyPostDescription,
+  const res = await getMultipleFrames();
+
+  const albumPublishResult = await ig.publish.album({
+    items: res.responseObject,
+    caption: res.juicyPostDescription
   });
-  console.log(publishResult);
+
+  console.log(albumPublishResult);
   return;
 }
 
