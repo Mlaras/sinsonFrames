@@ -1,5 +1,6 @@
 const { IgApiClient } = require('instagram-private-api');
-const { getMultipleFrames } = require('./multiPostScrapper.js');
+const {getRandomFrame} = require('./scrapper');
+const { StickerBuilder } = require('instagram-private-api/dist/sticker-builder/sticker-builder.js');
 require('dotenv').config();
 
 const ig = new IgApiClient();
@@ -19,15 +20,17 @@ const handler = async (event, context) => {
     return
   }
   await login();
-  const res = await getMultipleFrames();
-
-  const albumPublishResult = await ig.publish.album({
-    items: res.responseObject,
-    caption: res.juicyPostDescription
+  const randomFrame = await getRandomFrame();
+  const itemToPost = (await ig.feed.user(50428722630).items())[0];
+  
+  console.info("About to post...");
+  const storyPublishResult = await ig.publish.story({
+    file: randomFrame.frameBuffer,
+    stickerConfig: new StickerBuilder()
+      .add(StickerBuilder.attachmentFromMedia(itemToPost).center().scale(0.5))
   });
-
-  console.log(albumPublishResult);
+  console.info("Posted !");
+  console.log(storyPublishResult);
   return;
 }
-
 module.exports = {handler};
