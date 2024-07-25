@@ -10,21 +10,25 @@ const getMultipleFrames = async () => {
     try {
         const metadataResponse = await axios.get('https://frinkiac.com/api/random');
         // First we get metadata about the episode and season returned
-        const { Episode, Timestamp } = metadataResponse.data.Frame;
+        const { Episode } = metadataResponse.data.Frame;
         const { Nearby } = metadataResponse.data;
-        // add main frame to promise array
-        const mainImgUrl = `https://frinkiac.com/img/${Episode}/${Timestamp}.jpg`;
-        const mainImagePromise = fetch(mainImgUrl, { method: 'GET', responseType: 'arraybuffer' });
-        imagePromises.push(mainImagePromise);
-        
+        if (!Nearby) {
+            console.error('No nearby frames found');
+            return;
+        }
+        // const lastTimestamp = Nearby[Nearby.length-1].Timestamp;
         // use Nearby attribute to get more images.
-        // The following for loop skips 1 frame each time to make the post feel more dynamic
-        for (let index = 1; index < 5; index += 2) {
+        // The carrousel contains the main image right in the middle.
+        for (let index = 0; index < 7; index += 1) {
             const nextTimestamp = Nearby[index].Timestamp;
             const nearbyImgUrl = `https://frinkiac.com/img/${Episode}/${nextTimestamp}.jpg`;
             const imagePromise = fetch(nearbyImgUrl, { method: 'GET', responseType: 'arraybuffer' });
             imagePromises.push(imagePromise);
         }
+
+        /* const nextThreeFramesPromises = await getNextThreeFrames(Episode, lastTimestamp);
+        imagePromises = [...imagePromises, ...nextThreeFramesPromises]; */
+
         const imageResponses = await Promise.all(imagePromises);
 
         // iterate over image promises array to get multiple buffers of consecutive frames
@@ -75,4 +79,29 @@ const getMultipleFrames = async () => {
         console.error('Error getting random frame:', error);
     }
 }
+
+/* const getNextThreeFrames = async (episode, timestamp) => {
+    let imagePromises = [];    
+    try {
+        // Get the metadata of the episode
+        const metadataResponse = await axios.get(`https://frinkiac.com/caption/${episode}/${timestamp}`);
+        console.log('Metadata response:', metadataResponse.data);
+        const { Nearby } = metadataResponse.data;
+        if (!Nearby) {
+            console.error('No nearby frames found');
+            return;
+        }
+        // Look for the last 3 nearby frames (4 - 5 - 6)
+        for (let index = 4; index < 7; index += 1) {
+            const nextTimestamp = Nearby[index].Timestamp;
+            const nearbyImgUrl = `https://frinkiac.com/img/${episode}/${nextTimestamp}.jpg`;
+            const imagePromise = fetch(nearbyImgUrl, { method: 'GET', responseType: 'arraybuffer' });
+            imagePromises.push(imagePromise);
+        }
+        return imagePromises;
+    } catch (error) {
+        return console.error('Error getting next three random frames:', error);
+    }
+
+} */
 module.exports = {getMultipleFrames};
